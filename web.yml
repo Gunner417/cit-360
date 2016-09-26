@@ -13,7 +13,8 @@
     db_port: 3306
     service_dir: /usr/share/nginx/{{ service_name }}
   tasks:
-    - become: yes
+    - name: checks if line is in file.
+      become: yes
       lineinfile: dest=/etc/sysconfig/selinux regexp="^SELINUX=" line="SELINUX=permissive"
 
     - become: yes
