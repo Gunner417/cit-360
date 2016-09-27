@@ -1,5 +1,5 @@
 ---
-- hosts: db
+- hosts: localhost
   vars:
     db_password: password
   tasks:
