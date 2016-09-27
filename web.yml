@@ -1,5 +1,5 @@
 ---
-- hosts: web
+- hosts: localhost
   vars:
     db_password: password
     server_name: curriculum
