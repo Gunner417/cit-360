@@ -3,7 +3,7 @@
   vars:
     db_password: password
   tasks:
-    # requiresabecome yes ; writing to ect requires permissions
+    # requires [become yes] ; writing to ect requires permissions
     - name:  Copy module that copies the local host on to remote host
       become: yes
       copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
