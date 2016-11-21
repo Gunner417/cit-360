@@ -4,28 +4,28 @@
     db_password: password
   tasks:
     # requires [become yes] ; writing to ect requires permissions
-    - name:  Copy module that copies the local host on to remote host
+    - name:   Copies Module ; on local host on to remote host
       become: yes
       copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
     
-    - name: install MariaDB  
+    - name: Installs MariaDB  
       become: yes
       yum: name=MariaDB-server,MariaDB-client update_cache=yes state=present
 
-    - name: Starts MariaDB on boot
+    - name: On Boot : Starts MariaDB
       become: yes
       service: name=mariadb state=started enabled=yes
 
-    - name: Template that injects variable data into Mariadb file
+    - name: Template that Injects Variable Data into MariaDB
       template: src=db/mariadb_answers.txt dest=/tmp/mariadb_answers.txt mode=0644
 
-    - name: Reads MariaDB.txt file and redirects it to mysql_secure_installation
+    - name: Reads MariaDB.txt File ; Redirected to mysql_secure_installation
       become: yes
       shell: /usr/bin/mysql_secure_installation </tmp/mariadb_answers.txt
 
-    - name: Unzips package from remote to host machine 
+    - name: Unzips Package ; From Remote to Host Machine
       unarchive: src=db/db.tgz dest=~/ mode=0755
 
-    - name: Run database comand, inject the db_password on to localhost
+    - name: Runs Database Command ; Injects DB_PW on LocalHost
       command: ./make_databases.sh {{ db_password }} localhost chdir=~/db
       ignore_errors: True
