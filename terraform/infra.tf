@@ -173,3 +173,133 @@ resource "aws_security_group" "bastion" {
 
 	vpc_id = "${var.vpc_id}"
 }
+	#### Security Group for DB ####
+resource "aws_security_group" "DB" {
+	name = "DB"
+	description = "Security Group for DB"
+	ingress {
+		from_port = 22
+		to_port = 22
+		protocol = "tcp"
+		cidr_blocks = ["10.0.0.0/16"]
+	}
+
+	vpc_id = "${var.vpc_id}"
+}
+
+	#### DB Subnet Group ####
+resource "aws_db_subnet_group" "default" {
+    name = "db_subnet_group"
+    subnet_ids = ["${aws_subnet.private_subnet_a.id}", "${aws_subnet.private_subnet_b.id}"]
+    tags {
+        Name = "DB Subnet Group"
+    }
+}
+
+	#### RDS Instance [Relations Database Service] ####
+resource "aws_db_instance" "rds_instance" {
+  allocated_storage    = 5
+  engine               = "mariadb"
+  engine_version       = "10.0.24"
+  instance_class       = "db.t2.micro"
+  multi_az			   = "false"
+  publicly_accessible  = "false"
+  storage_type		   = "gp2"
+  name                 = "maria_db"
+  username             = "admin"
+  password             = "password"
+  db_subnet_group_name = "${aws_db_subnet_group.default.id}"
+
+  tags {
+  		Name = "RDS Instance"
+	}
+}
+
+
+	#### Security Groups ####
+resource "aws_security_group" "web" {
+	name = "securityweb"
+	description = "Security Group for Web Instances"
+	ingress {
+		from_port = 80
+		to_port = 80
+		from_port = 22
+		to_port = 22
+		protocol = "tcp"
+		cidr_blocks = ["10.0.0.0/16"]
+	}
+
+	vpc_id = "${var.vpc_id}"
+}
+
+resource "aws_security_group" "elb_security" {
+	name = "securityelb"
+	description = "Security group for the ELB"
+	ingress {
+		from_port = 80
+		to_port = 80
+		protocol = "0"
+		cidr_blocks = ["0.0.0.0/0"]
+	}
+
+	vpc_id = "${var.vpc_id}"
+}
+
+	#### Elastic Load Balancer ####
+resource "aws_elb" "elb" {
+  name = "terraform-elb"
+  subnets = ["${aws_subnet.public_subnet_b.id}", "${aws_subnet.public_subnet_c.id}"]
+  security_groups = ["${aws_security_group.elb_security.id}"]
+
+  listener {
+    instance_port = 80
+    instance_protocol = "http"
+    lb_port = 80
+    lb_protocol = "http"
+  }
+
+  health_check {
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    timeout = 5
+    target = "HTTP:80/"
+    interval = 30
+  }
+
+  instances = ["${aws_instance.centos7.id}", "${aws_instance.centos7_2.id}"]
+  cross_zone_load_balancing = true
+  idle_timeout = 400
+  connection_draining = true
+  connection_draining_timeout = 60
+
+  tags {
+    Name = "terraform_ELB"
+  }
+}
+
+	#### 2 Instance ####
+resource "aws_instance" "centos7" {
+    ami = "ami-d2c924b2"
+    associate_public_ip_address = false
+    subnet_id = "${aws_subnet.private_subnet_b.id}"
+    instance_type = "t2.micro"
+    key_name = "${var.aws_key_name}"
+    security_groups = ["${aws_security_group.web.id}"]
+    tags {
+        Name = "webserver-b"
+        service = "curriculum"
+    }
+}
+
+resource "aws_instance" "centos7_2" {
+    ami = "ami-d2c924b2"
+    associate_public_ip_address = false
+    subnet_id = "${aws_subnet.private_subnet_c.id}"
+    instance_type = "t2.micro"
+    key_name = "${var.aws_key_name}"
+    security_groups = ["${aws_security_group.web.id}"]
+    tags {
+        Name = "webserver-c"
+        service = "curriculum"
+    }
+}
