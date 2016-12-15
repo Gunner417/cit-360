@@ -1,31 +1,20 @@
 ---
 - hosts: db
-  vars:
-    db_password: password
   tasks:
-    # requires [become yes] ; writing to ect requires permissions
-    - name:   Copies Module ; on local host on to remote host
+    - include_vars: secret.yml
+    - name: COPY t3h DB
       become: yes
-      copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
-    
-    - name: Installs MariaDB  
+      copy: src=~/cit-360/ansible/db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
+           
+    - name: MARIADB INSTALL PL0X
       become: yes
-      yum: name=MariaDB-server,MariaDB-client update_cache=yes state=present
-
-    - name: On Boot : Starts MariaDB
+      package: name=MariaDB-client update_cache=yes state=present
+     
+    - name: UNPACK t3h db.tgz
       become: yes
-      service: name=mariadb state=started enabled=yes
-
-    - name: Template that Injects Variable Data into MariaDB
-      template: src=db/mariadb_answers.txt dest=/tmp/mariadb_answers.txt mode=0644
-
-    - name: Reads MariaDB.txt File ; Redirected to mysql_secure_installation
+      unarchive: src=db/db.tgz dest=~/ mode=0777
+       
+    - name: DID YU MAKE DATABAISE
       become: yes
-      shell: /usr/bin/mysql_secure_installation </tmp/mariadb_answers.txt
-
-    - name: Unzips Package ; From Remote to Host Machine
-      unarchive: src=db/db.tgz dest=~/ mode=0755
-
-    - name: Runs Database Command ; Injects DB_PW on LocalHost
-      command: ./make_databases.sh {{ db_password }} localhost chdir=~/db
+      command: ./make_databases.sh "{{ db_password }}"  tf-20161215065557563864500243.cuc0twrqljlf.us-west-2.rds.amazonaws.com chdir=~/db
       ignore_errors: True
